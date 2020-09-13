@@ -69,7 +69,6 @@ func (a *assignByContent) load(r ...io.Reader) error {
 func (a *assignByContent) assign() {
 	contents := a.Contents
 	a.Contents = nil
-	var total int
 	for len(contents) > 0 {
 		var content content
 		var names []struct {
@@ -77,7 +76,7 @@ func (a *assignByContent) assign() {
 			Name  name
 		}
 		refer := float64(a.Names[0].Number+contents[0].Number) / a.Names[0].Scale
-		average := float64(total) / a.Scale
+		average := namesAverage(a.Names)
 		for i, item := range a.Names {
 			if len(contents) > 0 {
 				if num := float64(item.Number) / item.Scale; num > refer && num > average {
@@ -91,7 +90,6 @@ func (a *assignByContent) assign() {
 					a.Contents = append(a.Contents, content)
 					a.Names[i].Number += content.Number
 					a.Names[i].Count++
-					total += content.Number
 				}
 			}
 		}
@@ -101,7 +99,6 @@ func (a *assignByContent) assign() {
 			a.Contents = append(a.Contents, content)
 			a.Names[names[i].Index].Number += content.Number
 			a.Names[names[i].Index].Count++
-			total += content.Number
 		}
 		sort.Slice(a.Names, func(i, j int) bool {
 			return float64(a.Names[i].Number)/a.Names[i].Scale < float64(a.Names[j].Number)/a.Names[j].Scale
@@ -139,4 +136,17 @@ func readCSVLine(r *csv.Reader) (id string, number int, err error) {
 	id = record[0]
 	number, err = strconv.Atoi(record[1])
 	return
+}
+
+func namesAverage(names []name) float64 {
+	length := len(names)
+	if length-2 > 0 {
+		names = names[1 : length-1]
+		length -= 2
+	}
+	var total float64
+	for _, i := range names {
+		total += float64(i.Number) / i.Scale
+	}
+	return total / float64(length)
 }
