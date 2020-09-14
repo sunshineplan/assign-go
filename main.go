@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/sunshineplan/utils/export"
 )
 
 var self string
@@ -40,7 +42,14 @@ func main() {
 	filename := "Result.txt"
 	nameList, err := os.Open(filepath.Join(self, "NameList.txt"))
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		f, err := os.Create(filepath.Join(self, "NameList.txt"))
+		if err == nil {
+			defer f.Close()
+			f.WriteString("Name1\nName2*2\n#Name3\nName4")
+			log.Print("Sample NameList.txt is created.")
+		}
+		return
 	}
 	defer nameList.Close()
 	r = append(r, nameList)
@@ -59,7 +68,14 @@ func main() {
 		task = &assignByContent{}
 		contentList, err := os.Open(filepath.Join(self, "ContentList.csv"))
 		if err != nil {
-			log.Fatal(err)
+			log.Print(err)
+			f, err := os.Create(filepath.Join(self, "ContentList.csv"))
+			if err == nil {
+				defer f.Close()
+				export.CSVWithUTF8BOM([]string{"ID", "Number"}, []content{{ID: "1", Number: 100}, {ID: "2", Number: 200}}, f)
+				log.Print("Sample ContentList.csv is created.")
+			}
+			return
 		}
 		defer contentList.Close()
 		filename = "Result.csv"
