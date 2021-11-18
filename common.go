@@ -8,8 +8,18 @@ import (
 	"strings"
 )
 
+var (
+	_ assign = &assignByName{}
+	_ assign = &assignByContent{}
+)
+
+type readers struct {
+	name    io.Reader
+	content io.Reader
+}
+
 type assign interface {
-	load(r ...io.Reader) error
+	load(r readers) error
 	assign()
 	export(w io.Writer) error
 }

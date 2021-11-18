@@ -1,13 +1,12 @@
 package main
 
 import (
-	"encoding/csv"
 	"fmt"
 	"io"
 	"sort"
 	"strconv"
 
-	"github.com/sunshineplan/utils/export"
+	"github.com/sunshineplan/utils/csv"
 )
 
 type content struct {
@@ -23,40 +22,36 @@ type assignByContent struct {
 	Names    []name
 }
 
-func (a *assignByContent) load(r ...io.Reader) error {
+func (a *assignByContent) load(r readers) error {
 	done := make(chan error, 2)
 	go func() {
 		var err error
-		a.Names, a.Scale, err = loadName(r[0])
+		defer func() { done <- err }()
+
+		a.Names, a.Scale, err = loadName(r.name)
 		if err != nil {
-			done <- err
 			return
 		}
 		sort.Slice(a.Names, func(i, j int) bool { return a.Names[i].Scale > a.Names[j].Scale })
-		done <- nil
 	}()
 	go func() {
-		r := csv.NewReader(r[1])
-		r.FieldsPerRecord = 2
-		id, number, err := readCSVLine(r)
-		if err == nil {
-			a.Contents = append(a.Contents, content{ID: id, Number: number})
-			a.Total += number
+		var err error
+		defer func() { done <- err }()
+
+		rows, err := csv.ReadAll(r.content)
+		if err != nil {
+			return
 		}
-		for {
-			id, number, err := readCSVLine(r)
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				done <- err
+		for rows.Next() {
+			var id string
+			var number int
+			if err = rows.Scan(&id, &number); err != nil {
 				return
 			}
 			a.Contents = append(a.Contents, content{ID: id, Number: number})
 			a.Total += number
 		}
 		sort.Slice(a.Contents, func(i, j int) bool { return a.Contents[i].Number > a.Contents[j].Number })
-		done <- nil
 	}()
 	for i := 0; i < 2; i++ {
 		if err := <-done; err != nil {
@@ -80,10 +75,13 @@ func (a *assignByContent) assign() {
 		for i, item := range a.Names {
 			if len(contents) > 0 {
 				if num := float64(item.Number) / item.Scale; num > refer && num > average {
-					names = append(names, struct {
-						Index int
-						Name  name
-					}{Index: i, Name: item})
+					names = append(
+						names,
+						struct {
+							Index int
+							Name  name
+						}{i, item},
+					)
 				} else {
 					content, contents = contents[0], contents[1:]
 					content.Name = item.Name
@@ -124,18 +122,7 @@ func (a assignByContent) export(w io.Writer) error {
 	for _, i := range a.Names {
 		fmt.Printf("%s\t%d\t%d\n", i.Name, i.Number, i.Count)
 	}
-	return export.CSVWithUTF8BOM([]string{"ID", "Number", "Name"}, a.Contents, w)
-}
-
-func readCSVLine(r *csv.Reader) (id string, number int, err error) {
-	var record []string
-	record, err = r.Read()
-	if err != nil {
-		return
-	}
-	id = record[0]
-	number, err = strconv.Atoi(record[1])
-	return
+	return csv.ExportUTF8(nil, a.Contents, w)
 }
 
 func namesAverage(names []name) float64 {

@@ -1,5 +1,5 @@
-module github.com/sunshineplan/assign-go
+module assign-go
 
-go 1.15
+go 1.17
 
-require github.com/sunshineplan/utils v0.0.0-20200910053708-d4b90836073e
+require github.com/sunshineplan/utils v0.0.20

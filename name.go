@@ -14,9 +14,9 @@ type assignByName struct {
 	Names []name
 }
 
-func (a *assignByName) load(r ...io.Reader) error {
+func (a *assignByName) load(r readers) error {
 	var err error
-	a.Names, a.Scale, err = loadName(r[0])
+	a.Names, a.Scale, err = loadName(r.name)
 	if err != nil {
 		return err
 	}

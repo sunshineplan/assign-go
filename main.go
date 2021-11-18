@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -13,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sunshineplan/utils/export"
+	"github.com/sunshineplan/utils/csv"
 )
 
 var self string
@@ -37,8 +36,10 @@ func usage() {
 }
 
 func main() {
+	flag.Usage = usage
+	flag.Parse()
+
 	var task assign
-	var r []io.Reader
 	filename := "Result.txt"
 	nameList, err := os.Open(filepath.Join(self, "NameList.txt"))
 	if err != nil {
@@ -52,9 +53,8 @@ func main() {
 		return
 	}
 	defer nameList.Close()
-	r = append(r, nameList)
+	r := readers{name: nameList}
 
-	flag.Parse()
 	if narg := flag.NArg(); narg == 0 || (narg == 1 && flag.Arg(0) == "name") {
 		fmt.Print("Please input total number: ")
 		var input string
@@ -72,14 +72,14 @@ func main() {
 			f, err := os.Create(filepath.Join(self, "ContentList.csv"))
 			if err == nil {
 				defer f.Close()
-				export.CSVWithUTF8BOM([]string{"ID", "Number"}, []content{{ID: "1", Number: 100}, {ID: "2", Number: 200}}, f)
+				csv.ExportUTF8([]string{"ID", "Number"}, []content{{ID: "1", Number: 100}, {ID: "2", Number: 200}}, f)
 				log.Print("Sample ContentList.csv is created.")
 			}
 			return
 		}
 		defer contentList.Close()
 		filename = "Result.csv"
-		r = append(r, contentList)
+		r.content = contentList
 	} else if narg == 2 && flag.Arg(0) == "name" {
 		total, err := strconv.Atoi(flag.Arg(1))
 		if err != nil {
@@ -90,7 +90,7 @@ func main() {
 		log.Fatalln("Unknown arguments:", strings.Join(flag.Args(), " "))
 	}
 
-	if err := task.load(r...); err != nil {
+	if err := task.load(r); err != nil {
 		log.Fatalln("Failed to load source:", err)
 	}
 	task.assign()
@@ -108,4 +108,7 @@ func main() {
 	if err := task.export(result); err != nil {
 		log.Fatalln("Failed to export result:", err)
 	}
+
+	fmt.Println("Press enter key to exit . . .")
+	fmt.Scanln()
 }
