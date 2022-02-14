@@ -38,10 +38,7 @@ func (a *assignByContent) load(r readers) error {
 		var err error
 		defer func() { done <- err }()
 
-		rows, err := csv.ReadAll(r.content)
-		if err != nil {
-			return
-		}
+		rows := csv.FromReader(r.content)
 		for rows.Next() {
 			var id string
 			var number int
