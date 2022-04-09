@@ -38,7 +38,7 @@ func (a *assignByContent) load(r readers) error {
 		var err error
 		defer func() { done <- err }()
 
-		rows := csv.FromReader(r.content)
+		rows := csv.NewReader(r.content, true)
 		for rows.Next() {
 			var id string
 			var number int
