@@ -21,13 +21,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v3
         with:
-          go-version: '1.x'
-
-      - name: Build
-        id: build
-        run: |
-          GOOS=windows go build -ldflags "-s -w" -o assign.exe
-          echo "date=$(TZ=PRC date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+          go-version: stable
 
       - name: Delete Old Release
         uses: actions/github-script@v6
@@ -57,6 +51,13 @@ jobs:
               ref: 'tags/v1.0'
             })
 
+      - name: Build
+        id: build
+        run: |
+          GOOS=darwin GOARCH=arm64 go build -ldflags "-s -w" -o assign
+          GOOS=windows go build -ldflags "-s -w" -o assign.exe
+          echo "date=$(TZ=PRC date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         env:
@@ -65,4 +66,4 @@ jobs:
           tag_name: v1.0
           name: ${{ steps.build.outputs.date }}
           body: ${{ steps.build.outputs.date }}
-          files: assign.exe
+          files: assign*

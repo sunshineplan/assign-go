@@ -3,14 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/sunshineplan/utils/csv"
 )
@@ -23,7 +20,6 @@ func init() {
 		log.Fatalf("Failed to get self path: %v", err)
 	}
 	self = filepath.Dir(exec)
-	rand.Seed(time.Now().UnixNano())
 }
 
 func usage() {
@@ -99,7 +95,7 @@ func main() {
 	result, err = os.Create(filepath.Join(self, filename))
 	if err != nil {
 		log.Println("Failed to save result:", err)
-		result, err = ioutil.TempFile(self, strings.ReplaceAll(filename, "Result.", "Result-*."))
+		result, err = os.CreateTemp(self, strings.ReplaceAll(filename, "Result.", "Result-*."))
 		if err != nil {
 			log.Fatalln("Failed to create temporary file:", err)
 		}
