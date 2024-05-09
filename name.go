@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"math/rand"
+	"math/rand/v2"
 	"strings"
 )
 
@@ -53,7 +53,7 @@ func (a assignByName) export(w io.Writer) error {
 }
 
 func randCeilFloor(n float64) int {
-	if rand.Intn(2) == 0 {
+	if rand.N(2) == 0 {
 		return int(math.Ceil(n))
 	}
 	return int(math.Floor(n))
