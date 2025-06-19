@@ -2,4 +2,4 @@ module assign-go
 
 go 1.24
 
-require github.com/sunshineplan/utils v0.1.76
+require github.com/sunshineplan/utils v0.1.77
