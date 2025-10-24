@@ -26,23 +26,24 @@ func (a *assignByContent) load(r readers) error {
 	done := make(chan error, 2)
 	go func() {
 		var err error
-		defer func() { done <- err }()
-
 		a.Names, a.Scale, err = loadName(r.name)
 		if err != nil {
+			done <- err
 			return
 		}
 		sort.Slice(a.Names, func(i, j int) bool { return a.Names[i].Scale > a.Names[j].Scale })
 	}()
 	go func() {
-		var err error
-		defer func() { done <- err }()
-
-		rows := csv.NewReader(r.content, true)
+		rows, err := csv.NewReader(r.content, true)
+		if err != nil {
+			done <- err
+			return
+		}
 		for rows.Next() {
 			var id string
 			var number int
-			if err = rows.Scan(&id, &number); err != nil {
+			if err := rows.Scan(&id, &number); err != nil {
+				done <- err
 				return
 			}
 			a.Contents = append(a.Contents, content{ID: id, Number: number})
@@ -50,7 +51,7 @@ func (a *assignByContent) load(r readers) error {
 		}
 		sort.Slice(a.Contents, func(i, j int) bool { return a.Contents[i].Number > a.Contents[j].Number })
 	}()
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		if err := <-done; err != nil {
 			return err
 		}
